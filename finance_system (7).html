@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>財務整合管理系統</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --surface2: #f0f2f5;
+    --surface3: #e4e8ee;
+    --border: #dde1e9;
+    --text: #1a2132;
+    --text2: #4a5568;
+    --text3: #8a93a6;
+    --accent: #2563eb;
+    --accent2: #1d4ed8;
+    --green: #16a34a;
+    --green-bg: #dcfce7;
+    --red: #dc2626;
+    --red-bg: #fee2e2;
+    --yellow: #b45309;
+    --yellow-bg: #fef3c7;
+    --purple: #7c3aed;
+    --cyan: #0891b2;
+    --company-a: #2563eb;
+    --company-b: #16a34a;
+    --company-c: #7c3aed;
+    --font: 'Noto Sans TC', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Layout ── */
+  .app-layout { display: flex; height: 100vh; overflow: hidden; }
+
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 8px rgba(0,0,0,.05);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .sidebar-logo {
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 60%, #3b82f6 100%);
+  }
+  .sidebar-logo h1 { font-size: 13px; font-weight: 700; color: #ffffff; letter-spacing: .05em; }
+  .sidebar-logo p { font-size: 10px; color: rgba(255,255,255,.65); margin-top: 2px; }
+
+  .company-switcher {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .company-switcher label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; display: block; margin-bottom: 6px; }
+  .company-tabs { display: flex; gap: 4px; }
+  .ctab {
+    flex: 1; padding: 5px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text2); font-size: 11px; font-weight: 600;
+    cursor: pointer; text-align: center; transition: all .15s;
+  }
+  .ctab.a.active { background: rgba(37,99,235,.12); border-color: var(--company-a); color: var(--company-a); }
+  .ctab.b.active { background: rgba(22,163,74,.12); border-color: var(--company-b); color: var(--company-b); }
+  .ctab.c.active { background: rgba(124,58,237,.12); border-color: var(--company-c); color: var(--company-c); }
+  .ctab:hover:not(.active) { background: var(--surface3); color: var(--text); }
+
+  .nav-section { padding: 4px 0; }
+  .nav-label {
+    font-size: 10px; color: var(--lc, #2563eb); text-transform: uppercase; letter-spacing: .10em;
+    padding: 7px 14px 7px 12px; font-weight: 800;
+    background: var(--lb, rgba(37,99,235,.08));
+    margin: 6px 8px 2px;
+    border-radius: 6px;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .nav-label-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  }
+  .nav-chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 6px;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 14px 8px 12px; cursor: pointer; color: var(--text2);
+    font-size: 13px; border-left: 3px solid transparent;
+    transition: all .12s; margin: 1px 0;
+  }
+  .nav-item:hover { color: var(--text); background: var(--surface2); }
+  .nav-item.active { color: var(--text); border-left-color: var(--accent); background: rgba(37,99,235,.07); font-weight: 600; }
+
+  .main-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+  .topbar {
+    padding: 14px 24px;
+    border-bottom: 3px solid #2563eb;
+    background: var(--surface);
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar-title { font-size: 16px; font-weight: 700; color: var(--text); }
+  .topbar-company {
+    font-size: 11px; padding: 3px 10px; border-radius: 20px;
+    font-weight: 600; letter-spacing: .05em;
+  }
+  .topbar-company.a { background: rgba(37,99,235,.12); color: var(--company-a); }
+  .topbar-company.b { background: rgba(22,163,74,.12); color: var(--company-b); }
+  .topbar-company.c { background: rgba(124,58,237,.12); color: var(--company-c); }
+
+  .page-content { padding: 24px; flex: 1; }
+
+  /* ── Cards & Stats ── */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
+  .stat-value { font-size: 22px; font-weight: 700; font-family: var(--mono); }
+  .stat-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
+  .stat-card.green .stat-value { color: var(--green); }
+  .stat-card.red .stat-value { color: var(--red); }
+  .stat-card.yellow .stat-value { color: var(--yellow); }
+  .stat-card.blue .stat-value { color: var(--accent); }
+
+  /* ── Section Cards ── */
+  .section-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 16px; overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  .section-head {
+    padding: 12px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+    border-radius: 10px 10px 0 0;
+  }
+  .section-title { font-size: 13px; font-weight: 600; color: #ffffff; display: flex; align-items: center; gap: 8px; }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th {
+    padding: 10px 12px; text-align: left; font-size: 10px;
+    color: #ffffff; text-transform: uppercase; letter-spacing: .06em;
+    background: #1e3a6e; border-bottom: 2px solid #2563eb;
+    white-space: nowrap; font-weight: 700;
+  }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text2); white-space: nowrap; }
+  tr:hover td { background: var(--surface2); }
+  tr:last-child td { border-bottom: none; }
+  .td-mono { font-family: var(--mono); font-size: 12px; color: var(--text); }
+  .td-name { max-width: 220px; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 20px;
+    font-size: 10px; font-weight: 600;
+  }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-red { background: var(--red-bg); color: var(--red); }
+  .badge-yellow { background: var(--yellow-bg); color: var(--yellow); }
+  .badge-blue { background: rgba(37,99,235,.1); color: var(--accent); }
+  .badge-gray { background: var(--surface3); color: var(--text2); }
+
+  /* ── Buttons ── */
+  .btn {
+    padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text); font-size: 12px; font-family: var(--font);
+    cursor: pointer; transition: all .12s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { background: var(--surface3); border-color: var(--text3); }
+  .btn-primary { background: var(--accent2); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #388bfd; }
+  .btn-green { background: rgba(63,185,80,.15); border-color: var(--green); color: var(--green); }
+  .btn-red { background: rgba(248,81,73,.15); border-color: var(--red); color: var(--red); }
+  .btn-sm { padding: 4px 10px; font-size: 11px; }
+
+  /* ── Forms ── */
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding: 18px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-label { font-size: 11px; color: var(--text3); }
+  .form-input, .form-select {
+    padding: 8px 10px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); font-size: 13px; font-family: var(--font);
+    outline: none; transition: border-color .12s;
+  }
+  .form-input:focus, .form-select:focus { border-color: var(--accent); }
+  .form-select option { background: var(--surface); }
+  .form-actions { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 18px; gap: 0; }
+  .tab-btn {
+    padding: 10px 16px; font-size: 12px; color: var(--text2);
+    border-bottom: 2px solid transparent; cursor: pointer; transition: all .12s;
+    background: none; border-top: none; border-left: none; border-right: none;
+    font-family: var(--font);
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Filter bar ── */
+  .filter-bar {
+    padding: 12px 18px; border-bottom: 1px solid var(--border);
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  }
+  .search-input {
+    padding: 6px 10px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); font-size: 12px;
+    outline: none; min-width: 200px;
+  }
+  .search-input:focus { border-color: var(--accent); }
+
+  /* ── Petty Cash ── */
+  .company-seg { display: flex; gap: 8px; flex-wrap: wrap; }
+  .seg-pill {
+    padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    border: 1px solid var(--border); cursor: pointer; transition: all .15s;
+  }
+  .seg-pill.all.active { background: rgba(88,166,255,.15); border-color: var(--accent); color: var(--accent); }
+  .seg-pill.co-a.active { background: rgba(88,166,255,.15); border-color: var(--company-a); color: var(--company-a); }
+  .seg-pill.co-b.active { background: rgba(63,185,80,.15); border-color: var(--company-b); color: var(--company-b); }
+  .seg-pill.co-c.active { background: rgba(188,140,255,.15); border-color: var(--company-c); color: var(--company-c); }
+  .seg-pill:not(.active) { background: var(--surface2); color: var(--text2); }
+
+  /* ── Amount colors ── */
+  .amt-in { color: var(--green); font-family: var(--mono); }
+  .amt-out { color: var(--red); font-family: var(--mono); }
+  .amt-neutral { font-family: var(--mono); color: var(--text); }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(30,40,60,.45); z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity .15s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; width: 640px; max-width: 95vw; max-height: 90vh;
+    overflow-y: auto; transform: translateY(20px); transition: transform .15s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-head {
+    padding: 18px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-size: 15px; font-weight: 600; }
+  .modal-close { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; }
+  .modal-close:hover { color: var(--text); }
+
+  /* ── Summary bar ── */
+  .summary-bar {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 16px; margin: 12px 18px;
+    display: flex; gap: 24px; flex-wrap: wrap;
+  }
+  .summary-item { display: flex; flex-direction: column; }
+  .summary-item label { font-size: 10px; color: var(--text3); }
+  .summary-item span { font-size: 14px; font-weight: 700; font-family: var(--mono); }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface2); }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+  /* ── Empty state ── */
+  .empty-state { padding: 40px; text-align: center; color: var(--text3); font-size: 13px; }
+
+  /* ── Pagination ── */
+  .pagination { padding: 10px 18px; display: flex; justify-content: flex-end; gap: 6px; border-top: 1px solid var(--border); }
+  .page-btn { padding: 4px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface2); color: var(--text2); font-size: 11px; cursor: pointer; }
+  .page-btn.active { background: var(--accent2); border-color: var(--accent); color: #fff; }
+  .page-btn:hover:not(.active) { background: var(--surface3); }
+
+  /* ── Notification ── */
+  .notif {
+    position: fixed; bottom: 24px; right: 24px; z-index: 200;
+    background: #ffffff; border: 1px solid var(--border);
+    box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    border-radius: 8px; padding: 12px 18px; font-size: 13px;
+    transform: translateY(80px); opacity: 0; transition: all .25s;
+    max-width: 320px;
+  }
+  .notif.show { transform: translateY(0); opacity: 1; }
+  .notif.success { border-left: 3px solid var(--green); }
+  .notif.error { border-left: 3px solid var(--red); }
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <h1>⬡ 財務整合系統</h1>
+      <p>Integrated Finance Manager</p>
+    </div>
+
+    <div class="company-switcher">
+      <label>當前公司</label>
+      <div class="company-tabs">
+        <div class="ctab a active" onclick="switchCompany('A')">A 公司</div>
+        <div class="ctab b" onclick="switchCompany('B')">B 公司</div>
+        <div class="ctab c" onclick="switchCompany('C')">C 公司</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label" style="--lc:#6366f1;--lb:rgba(99,102,241,.12)">
+        <span class="nav-label-dot" style="background:#6366f1"></span>總覽
+      </div>
+      <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
+        <span class="nav-chip" style="background:rgba(99,102,241,.15);color:#6366f1">⊞</span> 儀表板
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label" style="--lc:#2563eb;--lb:rgba(37,99,235,.1)">
+        <span class="nav-label-dot" style="background:#2563eb"></span>應收 / 應付
+      </div>
+      <div class="nav-item" data-page="receivable" onclick="navigate('receivable')">
+        <span class="nav-chip" style="background:rgba(37,99,235,.13);color:#2563eb">↓</span> 應收帳款
+      </div>
+      <div class="nav-item" data-page="payable" onclick="navigate('payable')">
+        <span class="nav-chip" style="background:rgba(220,38,38,.12);color:#dc2626">↑</span> 應付帳款
+      </div>
+      <div class="nav-item" data-page="receipt" onclick="navigate('receipt')">
+        <span class="nav-chip" style="background:rgba(8,145,178,.12);color:#0891b2">▣</span> 領 據
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label" style="--lc:#d97706;--lb:rgba(217,119,6,.1)">
+        <span class="nav-label-dot" style="background:#d97706"></span>費用管理
+      </div>
+      <div class="nav-item" data-page="advance" onclick="navigate('advance')">
+        <span class="nav-chip" style="background:rgba(217,119,6,.13);color:#d97706">⇄</span> 員工代墊 / 預支
+      </div>
+      <div class="nav-item" data-page="pettycash" onclick="navigate('pettycash')">
+        <span class="nav-chip" style="background:rgba(22,163,74,.13);color:#16a34a">◉</span> 零用金
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label" style="--lc:#7c3aed;--lb:rgba(124,58,237,.1)">
+        <span class="nav-label-dot" style="background:#7c3aed"></span>報表
+      </div>
+      <div class="nav-item" data-page="report" onclick="navigate('report')">
+        <span class="nav-chip" style="background:rgba(124,58,237,.13);color:#7c3aed">≣</span> 彙總報表
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">儀表板</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="topbar-company a" id="company-badge">A 公司</span>
+        <button class="btn btn-sm" id="sync-btn" onclick="syncFromSheets()" title="從 Google Sheets 同步資料">
+          <span id="sync-icon">⟳</span> 同步試算表
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="openAddModal()">＋ 新增資料</button>
+      </div>
+    </div>
+    <div id="sync-bar" style="display:none; padding:6px 24px; font-size:11px; background:#fefce8; border-bottom:1px solid #fde68a; color:#92400e; align-items:center; gap:8px;">
+      <span id="sync-bar-msg"></span>
+    </div>
+
+    <div class="page-content" id="page-content">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title">新增資料</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Notification -->
+<div class="notif" id="notif"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+const state = {
+  company: 'A',
+  page: 'dashboard',
+  pettyFilter: 'all',
+  editId: null,
+};
+
+// ═══════════════════════════════════════════════
+// DATA STORE  (localStorage-backed)
+// ═══════════════════════════════════════════════
+function loadDB() {
+  try { return JSON.parse(localStorage.getItem('finDB') || 'null') || initDB(); }
+  catch { return initDB(); }
+}
+
+function initDB() {
+  return {
+    receivable: [
+      { id: 1, company:'A', 年度:'112', 項次:'11201', 狀態:'已結案', 契約編號:'111TA774C3', 計畫名稱:'嘉義縣政府112年度水土保持案件委託檢查服務', 期別:'第1期', 應收金額:288800, 請款日期:'2023-07-19', 入帳日期:'', 入帳金額:'', 請款狀態:'已請款', 發票類別:'收據', 備註:'' },
+      { id: 2, company:'A', 年度:'112', 項次:'11202', 狀態:'已結案', 契約編號:'112TS003C3', 計畫名稱:'嘉義縣政府水利處112年工程品質督導委託作業', 期別:'第1期', 應收金額:409566, 請款日期:'2023-12-13', 入帳日期:'2024-01-04', 入帳金額:390063, 請款狀態:'已請款', 發票類別:'收據', 備註:'水利工程科' },
+      { id: 3, company:'A', 年度:'113', 項次:'11301', 狀態:'執行中', 契約編號:'112TA513C1', 計畫名稱:'嘉義縣113年度水利防災精進計畫委託專業服務', 期別:'第1期', 應收金額:2475000, 請款日期:'2024-02-15', 入帳日期:'2024-03-04', 入帳金額:2357143, 請款狀態:'已請款', 發票類別:'收據', 備註:'' },
+      { id: 4, company:'A', 年度:'113', 項次:'11301', 狀態:'執行中', 契約編號:'112TA513C1', 計畫名稱:'嘉義縣113年度水利防災精進計畫委託專業服務', 期別:'第2期', 應收金額:2475000, 請款日期:'2024-07-09', 入帳日期:'', 入帳金額:2357143, 請款狀態:'已請款', 發票類別:'三聯式', 備註:'' },
+      { id: 5, company:'B', 年度:'114', 項次:'11401', 狀態:'執行中', 契約編號:'113TB001C1', 計畫名稱:'B公司113年度示範計畫', 期別:'第1期', 應收金額:1500000, 請款日期:'2025-01-10', 入帳日期:'', 入帳金額:'', 請款狀態:'已請款', 發票類別:'三聯式', 備註:'' },
+      { id: 6, company:'C', 年度:'114', 項次:'11401', 狀態:'執行中', 契約編號:'113TC001C1', 計畫名稱:'C公司114年度服務計畫', 期別:'第1期', 應收金額:800000, 請款日期:'2025-02-01', 入帳日期:'', 入帳金額:'', 請款狀態:'尚未入帳', 發票類別:'收據', 備註:'' },
+    ],
+    payable: [
+      { id: 1, company:'A', 日期:'2024-03-01', 廠商名稱:'正大測量公司', 項目:'外業測量費', 金額:45000, 到期日:'2024-03-31', 狀態:'已付款', 備註:'' },
+      { id: 2, company:'A', 日期:'2024-06-15', 廠商名稱:'學識顧問', 項目:'技術顧問費', 金額:30000, 到期日:'2024-07-15', 狀態:'未付款', 備註:'' },
+      { id: 3, company:'B', 日期:'2024-08-01', 廠商名稱:'富強機械', 項目:'設備租賃', 金額:22000, 到期日:'2024-08-31', 狀態:'未付款', 備註:'' },
+    ],
+    advance: [
+      { id: 1, company:'A', 日期:'2024-02-10', 員工:'盧俊谷', 類型:'代墊', 項目:'出差交通費', 金額:3500, 沖銷日期:'2024-02-28', 狀態:'已沖銷', 備註:'' },
+      { id: 2, company:'A', 日期:'2024-03-05', 員工:'鄧雁馨', 類型:'預支', 項目:'研討會報名費', 金額:2800, 沖銷日期:'', 狀態:'未沖銷', 備註:'' },
+      { id: 3, company:'A', 日期:'2024-07-12', 員工:'吳冠德', 類型:'代墊', 項目:'現場材料採購', 金額:7200, 沖銷日期:'2024-07-31', 狀態:'已沖銷', 備註:'' },
+    ],
+    pettycash: [
+      { id: 1, company:'A', 日期:'2024-01-05', 科目:'辦公費', 說明:'文具用品', 支出:850, 收入:0, 核支公司:'A', 備註:'' },
+      { id: 2, company:'A', 日期:'2024-01-08', 科目:'交通費', 說明:'計程車費', 支出:320, 收入:0, 核支公司:'A', 備註:'' },
+      { id: 3, company:'A', 日期:'2024-01-15', 科目:'補充零用金', 說明:'補充現金', 支出:0, 收入:10000, 核支公司:'A', 備註:'' },
+      { id: 4, company:'A', 日期:'2024-02-03', 科目:'餐費', 說明:'工作會議餐費', 支出:1200, 收入:0, 核支公司:'B', 備註:'' },
+      { id: 5, company:'A', 日期:'2024-02-10', 科目:'郵電費', 說明:'掛號郵資', 支出:180, 收入:0, 核支公司:'C', 備註:'' },
+    ],
+    receipt: [
+      { id: 1, company:'A', 日期:'2024-01-08', 領據號碼:'R2024001', 收款人:'黃龔宏', 金額:15000, 項目:'工作獎金', 狀態:'已核銷', 備註:'' },
+      { id: 2, company:'A', 日期:'2024-02-20', 領據號碼:'R2024002', 收款人:'賴奕廷', 金額:8500, 項目:'外勤津貼', 狀態:'已核銷', 備註:'' },
+      { id: 3, company:'B', 日期:'2024-03-01', 領據號碼:'R2024003', 收款人:'林桂年', 金額:5000, 項目:'差旅補助', 狀態:'待核銷', 備註:'' },
+    ],
+    nextId: { receivable:7, payable:4, advance:4, pettycash:6, receipt:4 },
+  };
+}
+
+let db = loadDB();
+
+function saveDB() {
+  localStorage.setItem('finDB', JSON.stringify(db));
+}
+
+// ═══════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════
+const fmt = n => {
+  const num = parseFloat(n) || 0;
+  return num.toLocaleString('zh-TW');
+};
+
+const fmtDate = s => s ? s.slice(0, 10) : '—';
+
+function showNotif(msg, type='success') {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.className = `notif ${type} show`;
+  setTimeout(() => el.className = 'notif', 2500);
+}
+
+function companyData(key) {
+  return db[key].filter(r => r.company === state.company);
+}
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+const pageLabels = {
+  dashboard:'儀表板', receivable:'應收帳款', payable:'應付帳款',
+  advance:'員工代墊 / 預支沖銷', pettycash:'零用金管理',
+  receipt:'領 據', report:'彙總報表'
+};
+
+function navigate(page) {
+  state.page = page;
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.page === page);
+  });
+  document.getElementById('page-title').textContent = pageLabels[page];
+  renderPage();
+}
+
+function switchCompany(c) {
+  state.company = c;
+  document.querySelectorAll('.ctab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.ctab').forEach(el => {
+    if(el.classList.contains(c.toLowerCase())) el.classList.add('active');
+  });
+  const badge = document.getElementById('company-badge');
+  badge.textContent = c + ' 公司';
+  badge.className = `topbar-company ${c.toLowerCase()}`;
+  renderPage();
+}
+
+// ═══════════════════════════════════════════════
+// RENDER ENGINE
+// ═══════════════════════════════════════════════
+function renderPage() {
+  const c = document.getElementById('page-content');
+  const pages = { dashboard, receivable, payable, advance, pettycash, receipt, report };
+  c.innerHTML = pages[state.page]();
+}
+
+// ─── DASHBOARD ───────────────────────────────
+function dashboard() {
+  const rec = companyData('receivable');
+  const pay = companyData('payable');
+  const adv = companyData('advance');
+  const pc = companyData('pettycash');
+
+  const totalRec = rec.reduce((s,r) => s + (parseFloat(r.入帳金額)||parseFloat(r.應收金額)||0), 0);
+  const pendingRec = rec.filter(r=>r.請款狀態==='尚未入帳'||!r.入帳金額).reduce((s,r)=>s+(parseFloat(r.應收金額)||0),0);
+  const totalPay = pay.reduce((s,r)=>s+(parseFloat(r.金額)||0),0);
+  const pendingPay = pay.filter(r=>r.狀態==='未付款').reduce((s,r)=>s+(parseFloat(r.金額)||0),0);
+  const totalAdv = adv.filter(r=>r.狀態==='未沖銷').reduce((s,r)=>s+(parseFloat(r.金額)||0),0);
+  const pcBal = pc.reduce((s,r)=>s+(parseFloat(r.收入)||0)-(parseFloat(r.支出)||0),0);
+
+  const recentRec = [...rec].sort((a,b)=>b.id-a.id).slice(0,5);
+
+  return `
+  <div class="stat-grid">
+    <div class="stat-card blue">
+      <div class="stat-label">應收帳款（已入帳）</div>
+      <div class="stat-value">$${fmt(totalRec)}</div>
+      <div class="stat-sub">共 ${rec.length} 筆</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-label">待入帳應收</div>
+      <div class="stat-value">$${fmt(pendingRec)}</div>
+      <div class="stat-sub">${rec.filter(r=>!r.入帳金額||r.請款狀態==='尚未入帳').length} 筆待入帳</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">未付應付帳款</div>
+      <div class="stat-value">$${fmt(pendingPay)}</div>
+      <div class="stat-sub">共 $${fmt(totalPay)} 應付</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-label">未沖銷代墊 / 預支</div>
+      <div class="stat-value">$${fmt(totalAdv)}</div>
+      <div class="stat-sub">${adv.filter(r=>r.狀態==='未沖銷').length} 筆待沖銷</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">零用金餘額</div>
+      <div class="stat-value">$${fmt(pcBal)}</div>
+      <div class="stat-sub">${pc.length} 筆交易</div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-title">◈ 最近應收帳款</div>
+      <button class="btn btn-sm" onclick="navigate('receivable')">查看全部</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>日期</th><th>計畫名稱</th><th>期別</th>
+          <th>請款金額</th><th>入帳金額</th><th>狀態</th>
+        </tr></thead>
+        <tbody>
+          ${recentRec.map(r=>`<tr>
+            <td>${fmtDate(r.請款日期)}</td>
+            <td class="td-name" title="${r.計畫名稱}">${r.計畫名稱}</td>
+            <td>${r.期別}</td>
+            <td class="amt-in">$${fmt(r.應收金額)}</td>
+            <td class="amt-neutral">${r.入帳金額 ? '$'+fmt(r.入帳金額) : '—'}</td>
+            <td><span class="badge ${r.請款狀態==='已請款'?'badge-green':r.請款狀態==='尚未入帳'?'badge-yellow':'badge-gray'}">${r.請款狀態}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-title">◈ 零用金 — 三公司佔比</div>
+    </div>
+    ${pettyCashPieInfo()}
+  </div>`;
+}
+
+function pettyCashPieInfo() {
+  const all = db.pettycash;
+  const byComp = {};
+  ['A','B','C'].forEach(c => {
+    const rows = all.filter(r=>r.核支公司===c);
+    byComp[c] = rows.reduce((s,r)=>s+(parseFloat(r.支出)||0),0);
+  });
+  const total = Object.values(byComp).reduce((a,b)=>a+b,0)||1;
+  return `<div style="padding:16px;display:flex;gap:24px;flex-wrap:wrap">
+    ${['A','B','C'].map(c=>`
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:12px;height:12px;border-radius:50%;background:var(--company-${c.toLowerCase()})"></div>
+      <div>
+        <div style="font-size:11px;color:var(--text3)">A 公司零用金支付給 ${c} 公司</div>
+        <div style="font-family:var(--mono);font-weight:700;color:var(--text)">$${fmt(byComp[c])} <span style="color:var(--text3);font-size:11px">(${Math.round(byComp[c]/total*100)}%)</span></div>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+// ─── RECEIVABLE ──────────────────────────────
+function receivable() {
+  const data = companyData('receivable');
+  const total = data.reduce((s,r)=>s+(parseFloat(r.應收金額)||0),0);
+  const received = data.reduce((s,r)=>s+(parseFloat(r.入帳金額)||0),0);
+  const pending = total - received;
+
+  return `
+  <div class="summary-bar">
+    <div class="summary-item"><label>計畫總請款</label><span class="amt-in">$${fmt(total)}</span></div>
+    <div class="summary-item"><label>已入帳</label><span style="color:var(--green)">$${fmt(received)}</span></div>
+    <div class="summary-item"><label>未入帳差額</label><span style="color:var(--yellow)">$${fmt(pending)}</span></div>
+    <div class="summary-item"><label>筆數</label><span>${data.length}</span></div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-title">↓ 應收帳款明細</div>
+      <button class="btn btn-primary btn-sm" onclick="openAddModal('receivable')">＋ 新增</button>
+    </div>
+    <div class="filter-bar">
+      <input class="search-input" placeholder="搜尋計畫名稱…" oninput="filterTable(this,'rec-tbody')" />
+      <select class="form-select" style="padding:6px 8px;font-size:12px" onchange="filterTableSelect(this,'rec-tbody',5)">
+        <option value="">全部狀態</option>
+        <option>已請款</option><option>尚未入帳</option><option>待請款</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>年度</th><th>項次</th><th>計畫名稱</th><th>期別</th>
+          <th>請款金額</th><th>入帳金額</th><th>請款日期</th>
+          <th>入帳日期</th><th>狀態</th><th>發票</th><th>操作</th>
+        </tr></thead>
+        <tbody id="rec-tbody">
+          ${data.map(r=>`<tr data-search="${r.計畫名稱}${r.契約編號}" data-col5="${r.請款狀態}">
+            <td>${r.年度}</td>
+            <td style="font-family:var(--mono);font-size:11px">${r.項次||''}</td>
+            <td class="td-name" title="${r.計畫名稱}">${r.計畫名稱}</td>
+            <td>${r.期別}</td>
+            <td class="amt-in">$${fmt(r.應收金額)}</td>
+            <td class="${r.入帳金額?'amt-neutral':''}">
+              ${r.入帳金額?'$'+fmt(r.入帳金額):'<span style="color:var(--text3)">—</span>'}
+            </td>
+            <td>${fmtDate(r.請款日期)}</td>
+            <td>${fmtDate(r.入帳日期)}</td>
+            <td><span class="badge ${r.請款狀態==='已請款'?'badge-green':r.請款狀態==='尚未入帳'?'badge-yellow':'badge-gray'}">${r.請款狀態}</span></td>
+            <td><span class="badge badge-blue" style="font-size:9px">${r.發票類別||'收據'}</span></td>
+            <td style="display:flex;gap:4px">
+              <button class="btn btn-sm" onclick="editRecord('receivable',${r.id})">編輯</button>
+              <button class="btn btn-sm btn-red" onclick="deleteRecord('receivable',${r.id})">✕</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+// ─── PAYABLE ─────────────────────────────────
+function payable() {
+  const data = companyData('payable');
+  const total = data.reduce((s,r)=>s+(parseFloat(r.金額)||0),0);
+  const paid = data.filter(r=>r.狀態==='已付款').reduce((s,r)=>s+(parseFloat(r.金額)||0),0);
+
+  return `
+  <div class="summary-bar">
+    <div class="summary-item"><label>應付總計</label><span class="amt-out">$${fmt(total)}</span></div>
+    <div class="summary-item"><label>已付款</label><span style="color:var(--green)">$${fmt(paid)}</span></div>
+    <div class="summary-item"><label>未付款</label><span style="color:var(--red)">$${fmt(total-paid)}</span></div>
+  </div>
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-title">↑ 應付帳款明細</div>
+      <button class="btn btn-primary btn-sm" onclick="openAddModal('payable')">＋ 新增</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>日期</th><th>廠商名稱</th><th>項目</th><th>金額</th><th>到期日</th><th>狀態</th><th>操作</th>
+        </tr></thead>
+        <tbody>
+          ${data.map(r=>`<tr>
+            <td>${fmtDate(r.日期)}</td>
+            <td>${r.廠商名稱}</td>
+            <td>${r.項目}</td>
+            <td class="amt-out">$${fmt(r.金額)}</td>
+            <td>${fmtDate(r.到期日)}</td>
+            <td><span class="badge ${r.狀態==='已付款'?'badge-green':'badge-red'}">${r.狀態}</span></td>
+            <td style="display:flex;gap:4px">
+              <button class="btn btn-sm" onclick="editRecord('payable',${r.id})">編輯</button>
+              <button class="btn btn-sm btn-red" onclick="deleteRecord('payable',${r.id})">✕</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+// ─── ADVANCE ─────────────────────────────────
+function advance() {
+  const data = companyData('advance');
+  const unsettled = data.filter(r=>r.狀態==='未沖銷').reduce((s,r)=>s+(parseFloat(r.金額)||0),0);
+
+  return `
+  <div class="summary-bar">
+    <div class="summary-item"><label>待沖銷金額</label><span style="color:var(--yellow)">$${fmt(unsettled)}</span></div>
+    <div class="summary-item"><label>共 ${data.length} 筆</label><span>${data.filter(r=>r.狀態==='未沖銷').length} 筆未沖銷</span></div>
+  </div>
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-title">→ 員工代墊 / 預支沖銷</div>
+      <button class="btn btn-primary btn-sm" onclick="openAddModal('advance')">＋ 新增</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>日期</th><th>員工</th><th>類型</th><th>項目</th><th>金額</th><th>沖銷日期</th><th>狀態</th><th>操作</th>
+        </tr></thead>
+        <tbody>
+          ${data.map(r=>`<tr>
+            <td>${fmtDate(r.日期)}</td>
+            <td>${r.員工}</td>
+            <td><span class="badge ${r.類型==='代墊'?'badge-blue':'badge-yellow'}">${r.類型}</span></td>
+            <td>${r.項目}</td>
+            <td class="amt-neutral">$${fmt(r.金額)}</td>
+            <td>${fmtDate(r.沖銷日期)}</td>
+            <td><span class="badge ${r.狀態==='已沖銷'?'badge-green':'badge-red'}">${r.狀態}</span></td>
+            <td style="display:flex;gap:4px">
+              <button class="btn btn-sm" onclick="editRecord('advance',${r.id})">編輯</button>
+              <button class="btn btn-sm btn-red" onclick="deleteRecord('advance',${r.id})">✕</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+// ─── PETTY CASH ──────────────────────────────
+function pettycash() {
+  const data = db.pettycash; // all companies share petty cash pool
+  const filtered = state.pettyFilter==='all' ? data : data.filter(r=>r.核支公司===state.pettyFilter);
+  const balance = filtered.reduce((s,r)=>s+(parseFloat(r.收入)||0)-(parseFloat(r.支出)||0),0);
+  const totalIn = filtered.reduce((s,r)=>s+(parseFloat(r.收入)||0),0);
+  const totalOut = filtered.reduce((s,r)=>s+(parseFloat(r.支出)||0),0);
+
+  return `
+  <div style="padding:12px 18px 0; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px">
+    <div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">依核支公司篩選</div>
+      <div class="company-seg">
+        <div class="seg-pill all ${state.pettyFilter==='all'?'active':''}" onclick="setPettyFilter('all')">全部</div>
+        <div class="seg-pill co-a ${state.pettyFilter==='A'?'active':''}" onclick="setPettyFilter('A')">A 公司</div>
+        <div class="seg-pill co-b ${state.pettyFilter==='B'?'active':''}" onclick="setPettyFilter('B')">B 公司</div>
+        <div class="seg-pill co-c ${state.pettyFilter==='C'?'active':''}" onclick="setPettyFilter('C')">C 公司</div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="openAddModal('pettycash')">＋ 新增</button>
+  </div>
+
+  <div class="summary-bar">
+    <div class="summary-item"><label>零用金餘額</label><span class="${balance>=0?'amt-in':'amt-out'}">$${fmt(balance)}</span></div>
+    <div class="summary-item"><label>收入（補充）</label><span class="amt-in">$${fmt(totalIn)}</span></div>
+    <div class="summary-item"><label>支出</label><span class="amt-out">$${fmt(totalOut)}</span></div>
+    <div class="summary-item"><label>筆數</label><span>${filtered.length}</span></div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-title">◎ 零用金帳本 <span style="font-size:11px;color:var(--text3);margin-left:6px">（供 A、B、C 三公司使用，以核支公司區分）</span></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>日期</th><th>科目</th><th>說明</th><th>支出</th><th>收入</th><th>核支公司</th><th>操作</th>
+        </tr></thead>
+        <tbody>
+          ${filtered.map(r=>`<tr>
+            <td>${fmtDate(r.日期)}</td>
+            <td>${r.科目}</td>
+            <td>${r.說明}</td>
+            <td>${r.支出 ? '<span class="amt-out">$'+fmt(r.支出)+'</span>' : '<span style="color:var(--text3)">—</span>'}</td>
+            <td>${r.收入 ? '<span class="amt-in">$'+fmt(r.收入)+'</span>' : '<span style="color:var(--text3)">—</span>'}</td>
+            <td><span class="badge" style="background:rgba(${r.核支公司==='A'?'88,166,255':r.核支公司==='B'?'63,185,80':'188,140,255'},.15);color:var(--company-${r.核支公司.toLowerCase()})">${r.核支公司} 公司</span></td>
+            <td style="display:flex;gap:4px">
+              <button class="btn btn-sm" onclick="editRecord('pettycash',${r.id})">編輯</button>
+              <button class="btn btn-sm btn-red" onclick="deleteRecord('pettycash',${r.id})">✕</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+// ─── RECEIPT ─────────────────────────────────
+function receipt() {
+  const data = companyData('receipt');
+  const total = data.reduce((s,r)=>s+(parseFloat(r.金額)||0),0);
+
+  return `
+  <div class="summary-bar">
+    <div class="summary-item"><label>領據總金額</label><span class="amt-neutral">$${fmt(total)}</span></div>
+    <div class="summary-item"><label>已核銷</label><span>${data.filter(r=>r.狀態==='已核銷').length} 筆</span></div>
+    <div class="summary-item"><label>待核銷</label><span style="color:var(--yellow)">${data.filter(r=>r.狀態==='待核銷').length} 筆</span></div>
+  </div>
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-title">◻ 領據明細</div>
+      <button class="btn btn-primary btn-sm" onclick="openAddModal('receipt')">＋ 新增</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>日期</th><th>領據號碼</th><th>收款人</th><th>項目</th><th>金額</th><th>狀態</th><th>操作</th>
+        </tr></thead>
+        <tbody>
+          ${data.map(r=>`<tr>
+            <td>${fmtDate(r.日期)}</td>
+            <td style="font-family:var(--mono);font-size:11px">${r.領據號碼}</td>
+            <td>${r.收款人}</td>
+            <td>${r.項目}</td>
+            <td class="amt-neutral">$${fmt(r.金額)}</td>
+            <td><span class="badge ${r.狀態==='已核銷'?'badge-green':'badge-yellow'}">${r.狀態}</span></td>
+            <td style="display:flex;gap:4px">
+              <button class="btn btn-sm" onclick="editRecord('receipt',${r.id})">編輯</button>
+              <button class="btn btn-sm btn-red" onclick="deleteRecord('receipt',${r.id})">✕</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+// ─── REPORT ──────────────────────────────────
+function report() {
+  const byComp = ['A','B','C'].map(c => {
+    const rec = db.receivable.filter(r=>r.company===c);
+    const pay = db.payable.filter(r=>r.company===c);
+    const adv = db.advance.filter(r=>r.company===c&&r.狀態==='未沖銷');
+    const rct = db.receipt.filter(r=>r.company===c);
+    const pc = db.pettycash.filter(r=>r.核支公司===c);
+    return {
+      c, name: c+' 公司',
+      recTotal: rec.reduce((s,r)=>s+(parseFloat(r.應收金額)||0),0),
+      recIn: rec.reduce((s,r)=>s+(parseFloat(r.入帳金額)||0),0),
+      payTotal: pay.reduce((s,r)=>s+(parseFloat(r.金額)||0),0),
+      payUnpaid: pay.filter(r=>r.狀態==='未付款').reduce((s,r)=>s+(parseFloat(r.金額)||0),0),
+      advPending: adv.reduce((s,r)=>s+(parseFloat(r.金額)||0),0),
+      rctTotal: rct.reduce((s,r)=>s+(parseFloat(r.金額)||0),0),
+      pcOut: pc.reduce((s,r)=>s+(parseFloat(r.支出)||0),0),
+    };
+  });
+
+  return `
+  <div class="section-card">
+    <div class="section-head"><div class="section-title">≡ 三公司財務彙總</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>項目</th>
+          ${byComp.map(x=>`<th style="color:var(--company-${x.c.toLowerCase()})">${x.name}</th>`).join('')}
+          <th>合計</th>
+        </tr></thead>
+        <tbody>
+          ${[
+            ['應收帳款（請款）', x=>x.recTotal],
+            ['應收帳款（已入帳）', x=>x.recIn],
+            ['應收待入帳', x=>x.recTotal-x.recIn],
+            ['應付帳款', x=>x.payTotal],
+            ['應付未付款', x=>x.payUnpaid],
+            ['代墊預支（待沖銷）', x=>x.advPending],
+            ['領據金額', x=>x.rctTotal],
+            ['零用金支出', x=>x.pcOut],
+          ].map(([label, fn]) => {
+            const vals = byComp.map(x=>fn(x));
+            const sum = vals.reduce((a,b)=>a+b,0);
+            return `<tr>
+              <td style="font-weight:500;color:var(--text)">${label}</td>
+              ${vals.map(v=>`<td class="amt-neutral">$${fmt(v)}</td>`).join('')}
+              <td style="font-weight:700;font-family:var(--mono)">$${fmt(sum)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-head"><div class="section-title">≡ A 公司零用金核支明細（依公司分列）</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>核支公司</th><th>支出筆數</th><th>支出合計</th><th>收入（補充）</th><th>淨餘</th></tr></thead>
+        <tbody>
+          ${['A','B','C'].map(c=>{
+            const rows = db.pettycash.filter(r=>r.核支公司===c);
+            const out = rows.reduce((s,r)=>s+(parseFloat(r.支出)||0),0);
+            const inn = rows.reduce((s,r)=>s+(parseFloat(r.收入)||0),0);
+            return `<tr>
+              <td><span class="badge" style="background:rgba(${c==='A'?'88,166,255':c==='B'?'63,185,80':'188,140,255'},.15);color:var(--company-${c.toLowerCase()})">${c} 公司</span></td>
+              <td>${rows.filter(r=>r.支出>0).length}</td>
+              <td class="amt-out">$${fmt(out)}</td>
+              <td class="amt-in">$${fmt(inn)}</td>
+              <td class="${inn-out>=0?'amt-in':'amt-out'}">$${fmt(inn-out)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// MODAL FORMS
+// ═══════════════════════════════════════════════
+const formDefs = {
+  receivable: {
+    title: '應收帳款',
+    fields: [
+      {n:'年度',t:'text',ph:'114'},{n:'項次',t:'text',ph:'11401'},
+      {n:'狀態',t:'select',opts:['執行中','已結案']},
+      {n:'契約編號',t:'text'},{n:'計畫名稱',t:'text'},
+      {n:'期別',t:'text',ph:'第1期'},
+      {n:'應收金額',t:'number'},{n:'請款日期',t:'date'},
+      {n:'入帳金額',t:'number'},{n:'入帳日期',t:'date'},
+      {n:'請款狀態',t:'select',opts:['已請款','尚未入帳','待請款']},
+      {n:'發票類別',t:'select',opts:['收據','三聯式','二聯式']},
+      {n:'備註',t:'text'},
+    ]
+  },
+  payable: {
+    title: '應付帳款',
+    fields: [
+      {n:'日期',t:'date'},{n:'廠商名稱',t:'text'},
+      {n:'項目',t:'text'},{n:'金額',t:'number'},
+      {n:'到期日',t:'date'},
+      {n:'狀態',t:'select',opts:['未付款','已付款']},
+      {n:'備註',t:'text'},
+    ]
+  },
+  advance: {
+    title: '員工代墊 / 預支',
+    fields: [
+      {n:'日期',t:'date'},{n:'員工',t:'text'},
+      {n:'類型',t:'select',opts:['代墊','預支','差旅費']},
+      {n:'項目',t:'text'},{n:'金額',t:'number'},
+      {n:'沖銷日期',t:'date'},
+      {n:'狀態',t:'select',opts:['未沖銷','已沖銷']},
+      {n:'備註',t:'text'},
+    ]
+  },
+  pettycash: {
+    title: '零用金',
+    fields: [
+      {n:'日期',t:'date'},
+      {n:'科目',t:'select',opts:['辦公費','交通費','餐費','郵電費','雜費','補充零用金','其他']},
+      {n:'說明',t:'text'},
+      {n:'支出',t:'number'},{n:'收入',t:'number'},
+      {n:'核支公司',t:'select',opts:['A','B','C']},
+      {n:'備註',t:'text'},
+    ]
+  },
+  receipt: {
+    title: '領 據',
+    fields: [
+      {n:'日期',t:'date'},{n:'領據號碼',t:'text'},
+      {n:'收款人',t:'text'},{n:'項目',t:'text'},
+      {n:'金額',t:'number'},
+      {n:'狀態',t:'select',opts:['待核銷','已核銷']},
+      {n:'備註',t:'text'},
+    ]
+  }
+};
+
+let currentFormType = '';
+
+function openAddModal(type) {
+  currentFormType = type || state.page;
+  if(!formDefs[currentFormType]) { currentFormType='receivable'; }
+  state.editId = null;
+  const def = formDefs[currentFormType];
+  document.getElementById('modal-title').textContent = '新增' + def.title;
+  document.getElementById('modal-body').innerHTML = buildForm(def, {});
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function editRecord(type, id) {
+  currentFormType = type;
+  state.editId = id;
+  const record = db[type].find(r=>r.id===id);
+  if(!record) return;
+  const def = formDefs[type];
+  document.getElementById('modal-title').textContent = '編輯' + def.title;
+  document.getElementById('modal-body').innerHTML = buildForm(def, record);
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function buildForm(def, data) {
+  const fields = def.fields.map(f => {
+    const val = data[f.n] ?? '';
+    let inp;
+    if(f.t==='select') {
+      inp = `<select class="form-select" name="${f.n}">
+        ${f.opts.map(o=>`<option ${val===o?'selected':''}>${o}</option>`).join('')}
+      </select>`;
+    } else {
+      inp = `<input class="form-input" type="${f.t}" name="${f.n}" value="${val}" placeholder="${f.ph||''}" />`;
+    }
+    return `<div class="form-group"><label class="form-label">${f.n}</label>${inp}</div>`;
+  }).join('');
+
+  return `<div class="form-grid">${fields}</div>
+  <div class="form-actions">
+    <button class="btn" onclick="closeModal()">取消</button>
+    <button class="btn btn-primary" onclick="saveRecord()">儲存</button>
+  </div>`;
+}
+
+function saveRecord() {
+  const type = currentFormType;
+  const form = document.getElementById('modal-body');
+  const inputs = form.querySelectorAll('[name]');
+  const data = {};
+  inputs.forEach(el => {
+    data[el.name] = el.type==='number' ? (parseFloat(el.value)||0) : el.value;
+  });
+  data.company = state.company;
+
+  if(state.editId) {
+    const idx = db[type].findIndex(r=>r.id===state.editId);
+    if(idx>=0) { db[type][idx] = { ...db[type][idx], ...data }; }
+    showNotif('已更新資料', 'success');
+  } else {
+    data.id = db.nextId[type]++;
+    db[type].push(data);
+    showNotif('已新增資料', 'success');
+  }
+  saveDB();
+  closeModal();
+  renderPage();
+}
+
+function deleteRecord(type, id) {
+  if(!confirm('確定要刪除這筆資料嗎？')) return;
+  db[type] = db[type].filter(r=>r.id!==id);
+  saveDB();
+  showNotif('已刪除', 'error');
+  renderPage();
+}
+
+function closeModal(e) {
+  if(e && e.target !== document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════
+// FILTERS
+// ═══════════════════════════════════════════════
+function filterTable(input, tbodyId) {
+  const q = input.value.toLowerCase();
+  document.querySelectorAll(`#${tbodyId} tr`).forEach(tr => {
+    tr.style.display = tr.dataset.search?.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function filterTableSelect(sel, tbodyId, colIdx) {
+  const q = sel.value;
+  document.querySelectorAll(`#${tbodyId} tr`).forEach(tr => {
+    if(!q) { tr.style.display=''; return; }
+    tr.style.display = tr.dataset['col'+colIdx]===q ? '' : 'none';
+  });
+}
+
+function setPettyFilter(f) {
+  state.pettyFilter = f;
+  renderPage();
+}
+
+// ═══════════════════════════════════════════════
+// GOOGLE SHEETS 串接
+// ═══════════════════════════════════════════════
+const SHEETS_API = 'https://script.google.com/macros/s/AKfycbzwpaYztGYUWk1JgoqvLPJzeEn3wo8Jg-gkUyEyrWK_qz0tIJHfx0O37YMHN9SUWUGe/exec';
+
+// JSONP 呼叫，繞過 CORS 限制
+function fetchWithJSONP(url) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'jsonp_cb_' + Date.now();
+    const script = document.createElement('script');
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error('JSONP timeout'));
+    }, 15000);
+    function cleanup() {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+    window[cbName] = (data) => { cleanup(); resolve(data); };
+    script.onerror = () => { cleanup(); reject(new Error('JSONP script error')); };
+    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
+    document.head.appendChild(script);
+  });
+}
+
+function setSyncBar(msg, color='#fefce8', textColor='#92400e', borderColor='#fde68a') {
+  const bar = document.getElementById('sync-bar');
+  bar.style.display = 'flex';
+  bar.style.background = color;
+  bar.style.borderBottomColor = borderColor;
+  bar.style.color = textColor;
+  document.getElementById('sync-bar-msg').textContent = msg;
+}
+
+function hideSyncBar(delay=4000) {
+  setTimeout(() => {
+    document.getElementById('sync-bar').style.display = 'none';
+  }, delay);
+}
+
+async function syncFromSheets() {
+  const btn = document.getElementById('sync-btn');
+  const icon = document.getElementById('sync-icon');
+  btn.disabled = true;
+  icon.style.display = 'inline-block';
+  icon.style.animation = 'spin .8s linear infinite';
+  setSyncBar('⟳ 正在從 Google Sheets 讀取資料…', '#eff6ff', '#1e40af', '#bfdbfe');
+
+  // 加入 spin 動畫
+  if (!document.getElementById('spin-style')) {
+    const st = document.createElement('style');
+    st.id = 'spin-style';
+    st.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+    document.head.appendChild(st);
+  }
+
+  try {
+    const data = await fetchWithJSONP(SHEETS_API);
+
+    let countPayable = 0, countAdvance = 0, countVoucher = 0, countPettyCash = 0;
+
+    // ── 應付帳款 ──────────────────────────────────
+    if (data['應付帳款'] && Array.isArray(data['應付帳款'])) {
+      data['應付帳款'].forEach(row => {
+        const 日期  = findVal(row, ['日期','申請日期','時間戳記']) || '';
+        const 廠商  = findVal(row, ['廠商名稱','廠商','供應商']) || '';
+        const 項目  = findVal(row, ['項目','摘要','用途','說明']) || '';
+        const 金額  = parseAmt(findVal(row, ['金額','申請金額','費用']));
+        const 到期  = findVal(row, ['到期日','付款期限']) || '';
+        const 狀態  = findVal(row, ['付款狀態','狀態']) || '';
+        const 備註  = findVal(row, ['備註','說明']) || '';
+        if (!廠商 && !金額) return;
+        const existing = db.payable.find(r =>
+          r.company === state.company && r.廠商名稱 === 廠商 &&
+          r.日期 === normalizeDate(日期) && r.金額 === 金額
+        );
+        if (!existing) {
+          db.payable.push({
+            id: db.nextId.payable++, company: state.company,
+            日期: normalizeDate(日期), 廠商名稱: 廠商, 項目, 金額,
+            到期日: normalizeDate(到期),
+            狀態: 狀態.includes('已付') ? '已付款' : '未付款',
+            備註, _fromSheets: true,
+          });
+          countPayable++;
+        }
+      });
+    }
+
+    // ── 表單回覆 4：區分代墊/預支 vs 零用金支出 ──
+    if (data['表單回覆4'] && Array.isArray(data['表單回覆4'])) {
+      data['表單回覆4'].forEach(row => {
+        const 時間戳記  = row['時間戳記'] || '';
+        const 申請人    = row['申請人姓名'] || '';
+        const 申請類別  = row['申請類別'] || '';
+        const 計畫名稱  = row['計畫名稱'] || '';
+        const 用途說明  = row['用途說明'] || '';
+        const 申請金額  = parseAmt(row['申請金額']);
+        const 憑證類別  = row['憑證類別'] || '';
+        const 廠商      = row['廠商名稱/技師/講師/臨時人員'] || '';
+        const 發票日期  = row['發票/收據/領據日期(日期：2025/01/01)'] || '';
+        const 發票號碼  = row['發票號碼(如為收據/領據，請填寫 "--")'] || '';
+        const 核銷金額  = parseAmt(row['發票/收據/領據金額']);
+        const 付款狀態代墊 = row['付款狀態 (員工代墊)'] || '';
+        const 付款日期  = row['付款日期 (員工代墊)'] || '';
+        const 付款金額  = parseAmt(row['付款金額 (員工代墊)']);
+        const 零用金沖銷 = row['零用金已沖銷付款傳票'] || '';
+        const 零用金核銷 = row['零用金已核銷付款傳票'] || '';
+        const 付款狀態零用金 = row['付款狀態'] || '';  // 零用金那欄
+        const 支付對象  = row['支付對象'] || '';
+        const REQ       = row['收件編號'] || '';
+        const 核銷狀態  = row['核銷狀態'] || '';
+        const 預支編號  = row['預支編號'] || '';
+
+        if (!申請人 && !申請金額) return;
+
+        // 申請類別：代墊費用申請 / 預支費用申請 / 差旅費申請
+        const isAdvance = 申請類別.includes('代墊') || 申請類別.includes('預支') || 申請類別.includes('差旅');
+        const 類型 = 申請類別.includes('代墊') ? '代墊'
+                   : 申請類別.includes('差旅') ? '差旅費'
+                   : '預支';
+
+        if (!isAdvance) return; // 非以上三類跳過
+
+        // ── ① 寫入員工代墊/預支模組 ──
+        const existingAdv = db.advance.find(r =>
+          r.company === state.company && r.員工 === 申請人 &&
+          r.日期 === normalizeDate(時間戳記) && r.金額 === 申請金額
+        );
+        if (!existingAdv) {
+          db.advance.push({
+            id: db.nextId.advance++,
+            company: state.company,
+            日期: normalizeDate(時間戳記),
+            員工: 申請人, 類型,
+            項目: 用途說明 || 計畫名稱,
+            金額: 申請金額,
+            沖銷日期: normalizeDate(付款日期),
+            狀態: 付款狀態代墊.includes('已付') ? '已沖銷' : '未沖銷',
+            備註: REQ ? `[${REQ}] ${廠商}`.trim() : 廠商,
+            _fromSheets: true,
+          });
+          countAdvance++;
+        }
+
+        // ── ② 同步寫入零用金支出模組 ──
+        const 核支公司 = 支付對象.includes('B') ? 'B'
+                      : 支付對象.includes('C') ? 'C' : 'A';
+        const existingPC = db.pettycash.find(r =>
+          r.日期 === normalizeDate(時間戳記) && r.說明 === (用途說明 || 計畫名稱) && r.支出 === 申請金額
+        );
+        if (!existingPC) {
+          db.pettycash.push({
+            id: db.nextId.pettycash++,
+            company: 'A',
+            日期: normalizeDate(時間戳記),
+            科目: 類型,
+            說明: 用途說明 || 計畫名稱,
+            支出: 申請金額,
+            收入: 0,
+            核支公司,
+            備註: `[${REQ||'—'}] ${申請人}${廠商 ? ' / '+廠商 : ''}`.trim(),
+            _fromSheets: true,
+          });
+          countPettyCash++;
+        }
+
+        // ── ③ 有憑證則同步寫入領據模組 ──
+        if (發票日期 && 核銷金額 > 0) {
+          const existingR = db.receipt.find(r =>
+            r.收款人 === (廠商 || 申請人) && r.日期 === normalizeDate(發票日期) && r.金額 === 核銷金額
+          );
+          if (!existingR) {
+            db.receipt.push({
+              id: db.nextId.receipt++,
+              company: state.company,
+              日期: normalizeDate(發票日期),
+              領據號碼: 發票號碼 || REQ || '—',
+              收款人: 廠商 || 申請人,
+              項目: 用途說明 || 計畫名稱,
+              金額: 核銷金額,
+              狀態: 核銷狀態.includes('已核') ? '已核銷' : '待核銷',
+              備註: `[${REQ||'—'}] ${申請人}`,
+              _fromSheets: true,
+            });
+            countVoucher++;
+          }
+        }
+      });
+    }
+
+    // ── 預支沖銷/回傳憑證 ─────────────────────────
+    if (data['預支沖銷'] && Array.isArray(data['預支沖銷'])) {
+      data['預支沖銷'].forEach(row => {
+        const REQ     = findVal(row, ['收件編號','REQ單號']) || '';
+        const 日期    = findVal(row, ['時間戳記','日期']) || '';
+        const 員工    = findVal(row, ['申請人','姓名']) || '';
+        const 項目    = findVal(row, ['用途說明','用途','事由']) || '';
+        const 金額    = parseAmt(findVal(row, ['沖銷金額','申請金額','金額']));
+        const 憑證    = findVal(row, ['憑證網址','憑證']) || '';
+        const 狀態raw = findVal(row, ['沖銷狀態','狀態']) || '';
+        if (!員工 && !金額) return;
+        if (REQ) {
+          const match = db.advance.find(r => r.備註 && r.備註.includes(REQ));
+          if (match && 狀態raw.includes('已沖')) {
+            match.狀態 = '已沖銷';
+            match.沖銷日期 = normalizeDate(日期);
+          }
+        }
+      });
+    }
+
+    // ── 零用金收入（Form_Responses2）─────────────
+    if (data['零用金收入'] && Array.isArray(data['零用金收入'])) {
+      data['零用金收入'].forEach(row => {
+        const 年度    = row['年度'] || '';
+        const 日期    = row['日期'] || '';
+        const 來源    = row['零用金來源對象'] || '';
+        const 支付方式 = row['支付方式'] || '';
+        const 金額    = parseAmt(row['金額']);
+        const 入帳對象 = row['零用金入帳對象'] || '';
+        const 備註    = row['備註'] || '';
+        if (!金額) return;
+        const existing = db.pettycash.find(r =>
+          r.日期 === normalizeDate(日期) && r.收入 === 金額 && r.說明 === 來源
+        );
+        if (!existing) {
+          db.pettycash.push({
+            id: db.nextId.pettycash++,
+            company: 'A',
+            日期: normalizeDate(日期),
+            科目: '補充零用金',
+            說明: 來源,
+            支出: 0,
+            收入: 金額,
+            核支公司: 'A',
+            備註: `${支付方式}${備註 ? ' / '+備註 : ''}`,
+            _fromSheets: true,
+          });
+          countPettyCash++;
+        }
+      });
+    }
+
+    saveDB();
+    const total = countPayable + countAdvance + countVoucher + countPettyCash;
+    if (total === 0) {
+      setSyncBar('✓ 已是最新，無新增資料', '#f0fdf4', '#166534', '#bbf7d0');
+    } else {
+      setSyncBar(
+        `✓ 同步完成！應付 +${countPayable}，代墊/預支 +${countAdvance}，領據 +${countVoucher}，零用金 +${countPettyCash}`,
+        '#f0fdf4', '#166534', '#bbf7d0'
+      );
+    }
+    hideSyncBar(5000);
+    renderPage();
+
+  } catch(err) {
+    setSyncBar('✕ 同步失敗：' + err.message + '　（請確認 Apps Script 已部署且存取權為「任何人」）', '#fef2f2', '#991b1b', '#fecaca');
+    hideSyncBar(8000);
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    icon.style.animation = '';
+  }
+}
+
+// 工具：從 row 物件裡找第一個有值的欄位
+function findVal(row, keys) {
+  for (const k of keys) {
+    for (const col of Object.keys(row)) {
+      if (col.includes(k) && row[col] !== '' && row[col] !== null && row[col] !== undefined) {
+        return row[col];
+      }
+    }
+  }
+  return '';
+}
+
+// 工具：解析金額字串
+function parseAmt(v) {
+  if (!v) return 0;
+  return parseFloat(String(v).replace(/[,$,，\s]/g, '')) || 0;
+}
+
+// 工具：日期格式標準化 → yyyy-MM-dd
+function normalizeDate(v) {
+  if (!v) return '';
+  const s = String(v).trim();
+  // 民國年 113/08/09 → 2024-08-09
+  const roc = s.match(/^(\d{2,3})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (roc) {
+    const y = parseInt(roc[1]) + (parseInt(roc[1]) < 200 ? 1911 : 0);
+    return `${y}-${roc[2].padStart(2,'0')}-${roc[3].padStart(2,'0')}`;
+  }
+  // 已是 ISO 格式
+  const iso = s.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (iso) return `${iso[1]}-${iso[2].padStart(2,'0')}-${iso[3].padStart(2,'0')}`;
+  // Google Sheets 時間戳記
+  const ts = new Date(s);
+  if (!isNaN(ts)) return ts.toISOString().slice(0,10);
+  return s;
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+renderPage();
+</script>
+</body>
+</html>
